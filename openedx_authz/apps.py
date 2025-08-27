@@ -10,4 +10,4 @@ class OpenedxAuthzConfig(AppConfig):
     Configuration for the openedx_authz Django application.
     """
 
-    name = 'openedx_authz'
+    name = "openedx_authz"

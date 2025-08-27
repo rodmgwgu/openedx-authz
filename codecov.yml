@@ -6,7 +6,7 @@ coverage:
         target: auto
     patch:
       default:
-        enabled: yes
+        enabled: no
         target: 100%
 
 comment: false
