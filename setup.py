@@ -2,11 +2,12 @@
 """
 Package metadata for openedx_authz.
 """
+
 import os
 import re
 import sys
 
-from setuptools import find_packages, setup  # pylint: disable=import-error
+from setuptools import find_packages, setup
 
 
 def get_version(*file_paths):
