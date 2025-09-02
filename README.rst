@@ -6,9 +6,9 @@ openedx-authz
 Purpose
 *******
 
-For now, a placeholder repo covering upcoming implementation of RBAC (role-based access control) for the Open edX platform.
+This repository contains the architecture and design decisions for the new authorization system in Open edX. The project aims to provide a more flexible and powerful framework for managing user access, designed to modernize and replace the legacy permission system.
 
-See the `Product Requirements document for Roles & Permissions`_.
+See the `Product Requirements document for Roles & Permissions`_ for detailed specifications and requirements.
 
 .. _Product Requirements document for Roles & Permissions: https://openedx.atlassian.net/wiki/spaces/OEPM/pages/4724490259/PRD+Roles+Permissions
 
