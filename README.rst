@@ -1,6 +1,7 @@
 openedx-authz
 #############
 
+|pypi-badge| |ci-badge| |codecov-badge| |doc-badge| |pyversions-badge|
 |license-badge| |status-badge|
 
 Purpose
