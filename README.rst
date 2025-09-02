@@ -7,7 +7,9 @@ openedx-authz
 Purpose
 *******
 
-This repository contains the architecture and design decisions for the new authorization system in Open edX. The project aims to provide a more flexible and powerful framework for managing user access, designed to modernize and replace the legacy permission system.
+Open edX AuthZ provides the architecture and foundations of the authorization framework. It implements the core machinery needed to support consistent authorization across the Open edX ecosystem.
+
+This repository centralizes the architecture, design decisions, and reference implementation of a unified model for roles and permissions. It introduces custom roles, flexible scopes, and policy-based evaluation, aiming to replace the fragmented legacy system with a scalable, extensible, and reusable solution.
 
 See the `Product Requirements document for Roles & Permissions`_ for detailed specifications and requirements.
 
