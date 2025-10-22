@@ -95,6 +95,28 @@ class BaseRolesTestCase(TestCase):
         super().setUpClass()
         cls._seed_database_with_policies()
 
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up after all tests in the class.
+
+        Stops the auto-load policy thread to prevent database locking issues
+        with SQLite during concurrent access.
+        """
+        super().tearDownClass()
+        enforcer = AuthzEnforcer.get_enforcer()
+        if hasattr(enforcer, 'stop_auto_load_policy'):
+            enforcer.stop_auto_load_policy()
+
+    def setUp(self):
+        """Set up test environment."""
+        super().setUp()
+        AuthzEnforcer.get_enforcer().load_policy()  # Load policies before each test to simulate fresh start
+
+    def tearDown(self):
+        """Clean up after each test to ensure isolation."""
+        super().tearDown()
+        AuthzEnforcer.get_enforcer().clear_policy()  # Clear policies after each test to ensure isolation
+
 
 class RolesTestSetupMixin(BaseRolesTestCase):
     """Test case with comprehensive role assignments for general roles testing."""
@@ -229,16 +251,6 @@ class RolesTestSetupMixin(BaseRolesTestCase):
             },
         ]
         cls._assign_roles_to_users(assignments=assignments)
-
-    def setUp(self):
-        """Set up test environment."""
-        super().setUp()
-        AuthzEnforcer.get_enforcer().load_policy()  # Load policies before each test to simulate fresh start
-
-    def tearDown(self):
-        """Clean up after each test to ensure isolation."""
-        super().tearDown()
-        AuthzEnforcer.get_enforcer().clear_policy()  # Clear policies after each test to ensure isolation
 
 
 @ddt

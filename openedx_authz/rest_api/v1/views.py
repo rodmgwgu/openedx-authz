@@ -76,18 +76,14 @@ class PermissionValidationMeView(APIView):
 
     **Example Request**
 
-    POST /api/authz/v1/permissions/validate/me
-
-    .. code-block:: json
+    POST /api/authz/v1/permissions/validate/me::
 
         [
             {"action": "edit_library", "scope": "lib:DemoX:CSPROB"},
             {"action": "delete_library_content", "scope": "lib:OpenedX:CS50"}
         ]
 
-    **Example Response**
-
-    .. code-block:: json
+    **Example Response**::
 
         [
             {"action": "edit_library", "scope": "lib:DemoX:CSPROB", "allowed": true},
@@ -115,13 +111,7 @@ class PermissionValidationMeView(APIView):
                 action = perm["action"]
                 scope = perm["scope"]
                 allowed = api.is_user_allowed(username, action, scope)
-                response_data.append(
-                    {
-                        "action": action,
-                        "scope": scope,
-                        "allowed": allowed,
-                    }
-                )
+                response_data.append({"action": action, "scope": scope, "allowed": allowed})
             except ValueError as e:
                 logger.error(f"Error validating permission for user {username}: {e}")
                 return Response(data={"message": "Invalid scope format"}, status=status.HTTP_400_BAD_REQUEST)
@@ -178,9 +168,7 @@ class RoleUserAPIView(APIView):
 
     **Response Format (GET)**
 
-    Returns HTTP 200 OK with:
-
-    .. code-block:: json
+    Returns HTTP 200 OK with::
 
         {
             "count": 2,
@@ -204,9 +192,7 @@ class RoleUserAPIView(APIView):
 
     **Response Format (PUT)**
 
-    Returns HTTP 207 Multi-Status with:
-
-    .. code-block:: json
+    Returns HTTP 207 Multi-Status with::
 
         {
             "completed": [{"user_identifier": "john_doe", "status": "role_added"}],
@@ -215,9 +201,7 @@ class RoleUserAPIView(APIView):
 
     **Response Format (DELETE)**
 
-    Returns HTTP 207 Multi-Status with:
-
-    .. code-block:: json
+    Returns HTTP 207 Multi-Status with::
 
         {
             "completed": [{"user_identifier": "john_doe", "status": "role_removed"}],
@@ -233,9 +217,7 @@ class RoleUserAPIView(APIView):
 
     GET /api/authz/v1/roles/users/?scope=lib:DemoX:CSPROB&search=john&roles=library_admin
 
-    PUT /api/authz/v1/roles/users/
-
-    .. code-block:: json
+    PUT /api/authz/v1/roles/users/ ::
 
         {
             "role": "library_admin",
@@ -404,9 +386,7 @@ class RoleListView(APIView):
 
     GET /api/authz/v1/roles/?scope=lib:OpenedX:CSPROB&page=1&page_size=10
 
-    **Example Response**
-
-    .. code-block:: json
+    **Example Response**::
 
         {
             "count": 2,
