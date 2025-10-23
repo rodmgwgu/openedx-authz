@@ -78,9 +78,7 @@ def get_permissions_for_roles(
     permissions_by_role = {}
 
     for role in roles:
-        permissions_by_role[role.external_key] = {
-            "permissions": get_permissions_for_single_role(role)
-        }
+        permissions_by_role[role.external_key] = {"permissions": get_permissions_for_single_role(role)}
 
     return permissions_by_role
 
@@ -116,22 +114,15 @@ def get_permissions_for_active_roles_in_scope(
         permissions and scopes.
     """
     enforcer = AuthzEnforcer.get_enforcer()
-    filtered_policy = enforcer.get_filtered_grouping_policy(
-        GroupingPolicyIndex.SCOPE.value, scope.namespaced_key
-    )
+    filtered_policy = enforcer.get_filtered_grouping_policy(GroupingPolicyIndex.SCOPE.value, scope.namespaced_key)
 
     if role:
         filtered_policy = [
-            policy
-            for policy in filtered_policy
-            if policy[GroupingPolicyIndex.ROLE.value] == role.namespaced_key
+            policy for policy in filtered_policy if policy[GroupingPolicyIndex.ROLE.value] == role.namespaced_key
         ]
 
     return get_permissions_for_roles(
-        [
-            RoleData(namespaced_key=policy[GroupingPolicyIndex.ROLE.value])
-            for policy in filtered_policy
-        ]
+        [RoleData(namespaced_key=policy[GroupingPolicyIndex.ROLE.value]) for policy in filtered_policy]
     )
 
 
@@ -148,9 +139,7 @@ def get_role_definitions_in_scope(scope: ScopeData) -> list[RoleData]:
         list[Role]: A list of roles.
     """
     enforcer = AuthzEnforcer.get_enforcer()
-    policy_filtered = enforcer.get_filtered_policy(
-        PolicyIndex.SCOPE.value, scope.namespaced_key
-    )
+    policy_filtered = enforcer.get_filtered_policy(PolicyIndex.SCOPE.value, scope.namespaced_key)
 
     permissions_per_role = defaultdict(
         lambda: {
@@ -162,9 +151,7 @@ def get_role_definitions_in_scope(scope: ScopeData) -> list[RoleData]:
         permissions_per_role[policy[PolicyIndex.ROLE.value]]["scopes"].append(
             ScopeData(namespaced_key=policy[PolicyIndex.SCOPE.value])
         )  # TODO: I don't think this actually gets used anywhere
-        permissions_per_role[policy[PolicyIndex.ROLE.value]]["permissions"].append(
-            get_permission_from_policy(policy)
-        )
+        permissions_per_role[policy[PolicyIndex.ROLE.value]]["permissions"].append(get_permission_from_policy(policy))
 
     return [
         RoleData(
@@ -194,14 +181,10 @@ def get_all_roles_in_scope(scope: ScopeData) -> list[list[str]]:
         list[list[str]]: A list of policies in the specified scope.
     """
     enforcer = AuthzEnforcer.get_enforcer()
-    return enforcer.get_filtered_grouping_policy(
-        GroupingPolicyIndex.SCOPE.value, scope.namespaced_key
-    )
+    return enforcer.get_filtered_grouping_policy(GroupingPolicyIndex.SCOPE.value, scope.namespaced_key)
 
 
-def assign_role_to_subject_in_scope(
-    subject: SubjectData, role: RoleData, scope: ScopeData
-) -> bool:
+def assign_role_to_subject_in_scope(subject: SubjectData, role: RoleData, scope: ScopeData) -> bool:
     """Assign a role to a subject.
 
     Args:
@@ -220,9 +203,7 @@ def assign_role_to_subject_in_scope(
     )
 
 
-def batch_assign_role_to_subjects_in_scope(
-    subjects: list[SubjectData], role: RoleData, scope: ScopeData
-) -> None:
+def batch_assign_role_to_subjects_in_scope(subjects: list[SubjectData], role: RoleData, scope: ScopeData) -> None:
     """Assign a role to a list of subjects.
 
     Args:
@@ -233,9 +214,7 @@ def batch_assign_role_to_subjects_in_scope(
         assign_role_to_subject_in_scope(subject, role, scope)
 
 
-def unassign_role_from_subject_in_scope(
-    subject: SubjectData, role: RoleData, scope: ScopeData
-) -> bool:
+def unassign_role_from_subject_in_scope(subject: SubjectData, role: RoleData, scope: ScopeData) -> bool:
     """Unassign a role from a subject.
 
     Args:
@@ -247,14 +226,10 @@ def unassign_role_from_subject_in_scope(
         bool: True if the role was unassigned successfully, False otherwise.
     """
     enforcer = AuthzEnforcer.get_enforcer()
-    return enforcer.delete_roles_for_user_in_domain(
-        subject.namespaced_key, role.namespaced_key, scope.namespaced_key
-    )
+    return enforcer.delete_roles_for_user_in_domain(subject.namespaced_key, role.namespaced_key, scope.namespaced_key)
 
 
-def batch_unassign_role_from_subjects_in_scope(
-    subjects: list[SubjectData], role: RoleData, scope: ScopeData
-) -> None:
+def batch_unassign_role_from_subjects_in_scope(subjects: list[SubjectData], role: RoleData, scope: ScopeData) -> None:
     """Unassign a role from a list of subjects.
 
     Args:
@@ -277,9 +252,7 @@ def get_subject_role_assignments(subject: SubjectData) -> list[RoleAssignmentDat
     """
     enforcer = AuthzEnforcer.get_enforcer()
     role_assignments = []
-    for policy in enforcer.get_filtered_grouping_policy(
-        GroupingPolicyIndex.SUBJECT.value, subject.namespaced_key
-    ):
+    for policy in enforcer.get_filtered_grouping_policy(GroupingPolicyIndex.SUBJECT.value, subject.namespaced_key):
         role = RoleData(namespaced_key=policy[GroupingPolicyIndex.ROLE.value])
         role.permissions = get_permissions_for_single_role(role)
 
@@ -293,9 +266,7 @@ def get_subject_role_assignments(subject: SubjectData) -> list[RoleAssignmentDat
     return role_assignments
 
 
-def get_subject_role_assignments_in_scope(
-    subject: SubjectData, scope: ScopeData
-) -> list[RoleAssignmentData]:
+def get_subject_role_assignments_in_scope(subject: SubjectData, scope: ScopeData) -> list[RoleAssignmentData]:
     """Get the roles for a subject in a specific scope.
 
     Args:
@@ -308,9 +279,7 @@ def get_subject_role_assignments_in_scope(
     enforcer = AuthzEnforcer.get_enforcer()
     # TODO: we still need to get the remaining data for the role like email, etc
     role_assignments = []
-    for namespaced_key in enforcer.get_roles_for_user_in_domain(
-        subject.namespaced_key, scope.namespaced_key
-    ):
+    for namespaced_key in enforcer.get_roles_for_user_in_domain(subject.namespaced_key, scope.namespaced_key):
         role = RoleData(namespaced_key=namespaced_key)
         role_assignments.append(
             RoleAssignmentData(
@@ -327,9 +296,7 @@ def get_subject_role_assignments_in_scope(
     return role_assignments
 
 
-def get_subject_role_assignments_for_role_in_scope(
-    role: RoleData, scope: ScopeData
-) -> list[RoleAssignmentData]:
+def get_subject_role_assignments_for_role_in_scope(role: RoleData, scope: ScopeData) -> list[RoleAssignmentData]:
     """Get the subjects assigned to a specific role in a specific scope.
 
     Args:
@@ -341,9 +308,7 @@ def get_subject_role_assignments_for_role_in_scope(
     """
     enforcer = AuthzEnforcer.get_enforcer()
     role_assignments = []
-    for subject in enforcer.get_users_for_role_in_domain(
-        role.namespaced_key, scope.namespaced_key
-    ):
+    for subject in enforcer.get_users_for_role_in_domain(role.namespaced_key, scope.namespaced_key):
         if subject.startswith(f"{RoleData.NAMESPACE}{RoleData.SEPARATOR}"):
             # Skip roles that are also subjects
             continue

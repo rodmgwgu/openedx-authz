@@ -40,7 +40,7 @@ class TestFilter(unittest.TestCase):
             ptype=["p"],
             v0=[make_user_key("alice")],
             v1=[make_action_key("read")],
-            v2=[make_scope_key("org", "MIT")]
+            v2=[make_scope_key("org", "MIT")],
         )
         self.assertEqual(f.ptype, ["p"])
         self.assertEqual(f.v0, [make_user_key("alice")])
@@ -132,7 +132,7 @@ class TestFilter(unittest.TestCase):
             ptype=["g"],
             v0=[make_user_key("alice")],
             v1=[make_role_key("admin")],
-            v2=[make_scope_key("org", "MIT")]
+            v2=[make_scope_key("org", "MIT")],
         )
         self.assertEqual(f.ptype, ["g"])
         self.assertEqual(f.v0, [make_user_key("alice")])

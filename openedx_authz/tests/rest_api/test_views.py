@@ -209,10 +209,22 @@ class TestPermissionValidationMeView(ViewTestMixin):
         [{}, {}],
         [{}, {"action": "edit_library", "scope": "lib:Org1:LIB1"}],
         [{"action": "edit_library", "scope": "lib:Org1:LIB1"}, {}],
-        [{"action": "edit_library", "scope": "lib:Org1:LIB1"}, {"action": "", "scope": "lib:Org1:LIB1"}],
-        [{"action": "edit_library", "scope": "lib:Org1:LIB1"}, {"action": "edit_library", "scope": ""}],
-        [{"action": "edit_library", "scope": "lib:Org1:LIB1"}, {"scope": "lib:Org1:LIB1"}],
-        [{"action": "edit_library", "scope": "lib:Org1:LIB1"}, {"action": "edit_library"}],
+        [
+            {"action": "edit_library", "scope": "lib:Org1:LIB1"},
+            {"action": "", "scope": "lib:Org1:LIB1"},
+        ],
+        [
+            {"action": "edit_library", "scope": "lib:Org1:LIB1"},
+            {"action": "edit_library", "scope": ""},
+        ],
+        [
+            {"action": "edit_library", "scope": "lib:Org1:LIB1"},
+            {"scope": "lib:Org1:LIB1"},
+        ],
+        [
+            {"action": "edit_library", "scope": "lib:Org1:LIB1"},
+            {"action": "edit_library"},
+        ],
     )
     def test_permission_validation_invalid_data(self, invalid_data: list[dict]):
         """Test permission validation with invalid request data.
@@ -239,7 +251,11 @@ class TestPermissionValidationMeView(ViewTestMixin):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     @data(
-        (Exception(), status.HTTP_500_INTERNAL_SERVER_ERROR, "An error occurred while validating permissions"),
+        (
+            Exception(),
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "An error occurred while validating permissions",
+        ),
         (ValueError(), status.HTTP_400_BAD_REQUEST, "Invalid scope format"),
     )
     @unpack
@@ -252,7 +268,9 @@ class TestPermissionValidationMeView(ViewTestMixin):
         """
         with patch.object(api, "is_user_allowed", side_effect=exception):
             response = self.client.post(
-                self.url, data=[{"action": "edit_library", "scope": "lib:Org1:LIB1"}], format="json"
+                self.url,
+                data=[{"action": "edit_library", "scope": "lib:Org1:LIB1"}],
+                format="json",
             )
 
             self.assertEqual(response.status_code, status_code)
@@ -388,12 +406,25 @@ class TestRoleUserAPIView(ViewTestMixin):
         # Single user - success (regular user)
         (["regular_1@example.com"], 1, 0),
         # Multiple users - admin and regular users
-        (["admin_1@example.com", "regular_1@example.com", "regular_2@example.com"], 3, 0),
+        (
+            ["admin_1@example.com", "regular_1@example.com", "regular_2@example.com"],
+            3,
+            0,
+        ),
         # With username and email --------------------
         # All success
         (["admin_1", "regular_1@example.com", "regular_2@example.com"], 3, 0),
         # Mixed results (user not found)
-        (["admin_1", "regular_1@example.com", "nonexistent", "notexistent@example.com"], 2, 2),
+        (
+            [
+                "admin_1",
+                "regular_1@example.com",
+                "nonexistent",
+                "notexistent@example.com",
+            ],
+            2,
+            2,
+        ),
     )
     @unpack
     def test_add_users_to_role_success(self, users: list[str], expected_completed: int, expected_errors: int):
@@ -440,7 +471,11 @@ class TestRoleUserAPIView(ViewTestMixin):
     @patch.object(api, "assign_role_to_user_in_scope")
     def test_add_users_to_role_exception_handling(self, mock_assign_role_to_user_in_scope):
         """Test adding users to a role with exception handling."""
-        request_data = {"role": "library_admin", "scope": "lib:Org1:LIB1", "users": ["regular_1"]}
+        request_data = {
+            "role": "library_admin",
+            "scope": "lib:Org1:LIB1",
+            "users": ["regular_1"],
+        }
         mock_assign_role_to_user_in_scope.side_effect = Exception()
 
         with patch.object(api.ContentLibraryData, "exists", return_value=True):
@@ -450,7 +485,10 @@ class TestRoleUserAPIView(ViewTestMixin):
             self.assertEqual(len(response.data["completed"]), 0)
             self.assertEqual(len(response.data["errors"]), 1)
             self.assertEqual(response.data["errors"][0]["user_identifier"], "regular_1")
-            self.assertEqual(response.data["errors"][0]["error"], RoleOperationError.ROLE_ASSIGNMENT_ERROR)
+            self.assertEqual(
+                response.data["errors"][0]["error"],
+                RoleOperationError.ROLE_ASSIGNMENT_ERROR,
+            )
 
     @data(
         {},
@@ -492,7 +530,11 @@ class TestRoleUserAPIView(ViewTestMixin):
         Expected result:
             - Returns appropriate status code based on permissions
         """
-        request_data = {"role": "library_admin", "scope": "lib:Org3:LIB3", "users": ["regular_2"]}
+        request_data = {
+            "role": "library_admin",
+            "scope": "lib:Org3:LIB3",
+            "users": ["regular_2"],
+        }
         user = User.objects.filter(username=username).first()
         self.client.force_authenticate(user=user)
 
@@ -515,12 +557,25 @@ class TestRoleUserAPIView(ViewTestMixin):
         # Single user - success (regular user)
         (["regular_3@example.com"], 1, 0),
         # Multiple users - all success (admin and regular users)
-        (["admin_2@example.com", "regular_3@example.com", "regular_4@example.com"], 3, 0),
+        (
+            ["admin_2@example.com", "regular_3@example.com", "regular_4@example.com"],
+            3,
+            0,
+        ),
         # With username and email -------------------
         # All success
         (["admin_2", "regular_3@example.com", "regular_4@example.com"], 3, 0),
         # Mixed results (user not found)
-        (["admin_2", "regular_3@example.com", "nonexistent", "notexistent@example.com"], 2, 2),
+        (
+            [
+                "admin_2",
+                "regular_3@example.com",
+                "nonexistent",
+                "notexistent@example.com",
+            ],
+            2,
+            2,
+        ),
     )
     @unpack
     def test_remove_users_from_role_success(self, users: list[str], expected_completed: int, expected_errors: int):
@@ -530,7 +585,11 @@ class TestRoleUserAPIView(ViewTestMixin):
             - Returns 207 MULTI-STATUS status
             - Returns appropriate completed and error counts
         """
-        query_params = {"role": "library_user", "scope": "lib:Org2:LIB2", "users": ",".join(users)}
+        query_params = {
+            "role": "library_user",
+            "scope": "lib:Org2:LIB2",
+            "users": ",".join(users),
+        }
 
         with patch.object(api.ContentLibraryData, "exists", return_value=True):
             response = self.client.delete(f"{self.url}?{urlencode(query_params)}")
@@ -542,7 +601,11 @@ class TestRoleUserAPIView(ViewTestMixin):
     @patch.object(api, "unassign_role_from_user")
     def test_remove_users_from_role_exception_handling(self, mock_unassign_role_from_user):
         """Test removing users from a role with exception handling."""
-        query_params = {"role": "library_admin", "scope": "lib:Org1:LIB1", "users": "regular_1,regular_2,regular_3"}
+        query_params = {
+            "role": "library_admin",
+            "scope": "lib:Org1:LIB1",
+            "users": "regular_1,regular_2,regular_3",
+        }
         mock_unassign_role_from_user.side_effect = [True, False, Exception()]
 
         with patch.object(api.ContentLibraryData, "exists", return_value=True):
@@ -551,11 +614,20 @@ class TestRoleUserAPIView(ViewTestMixin):
             self.assertEqual(len(response.data["completed"]), 1)
             self.assertEqual(len(response.data["errors"]), 2)
             self.assertEqual(response.data["completed"][0]["user_identifier"], "regular_1")
-            self.assertEqual(response.data["completed"][0]["status"], RoleOperationStatus.ROLE_REMOVED)
+            self.assertEqual(
+                response.data["completed"][0]["status"],
+                RoleOperationStatus.ROLE_REMOVED,
+            )
             self.assertEqual(response.data["errors"][0]["user_identifier"], "regular_2")
-            self.assertEqual(response.data["errors"][0]["error"], RoleOperationError.USER_DOES_NOT_HAVE_ROLE)
+            self.assertEqual(
+                response.data["errors"][0]["error"],
+                RoleOperationError.USER_DOES_NOT_HAVE_ROLE,
+            )
             self.assertEqual(response.data["errors"][1]["user_identifier"], "regular_3")
-            self.assertEqual(response.data["errors"][1]["error"], RoleOperationError.ROLE_REMOVAL_ERROR)
+            self.assertEqual(
+                response.data["errors"][1]["error"],
+                RoleOperationError.ROLE_REMOVAL_ERROR,
+            )
 
     @data(
         {},
@@ -596,7 +668,11 @@ class TestRoleUserAPIView(ViewTestMixin):
         Expected result:
             - Returns appropriate status code based on permissions
         """
-        query_params = {"role": "library_admin", "scope": "lib:Org3:LIB3", "users": "user1,user2"}
+        query_params = {
+            "role": "library_admin",
+            "scope": "lib:Org3:LIB3",
+            "users": "user1,user2",
+        }
         user = User.objects.filter(username=username).first()
         self.client.force_authenticate(user=user)
 

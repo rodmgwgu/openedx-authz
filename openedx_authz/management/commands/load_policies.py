@@ -69,27 +69,38 @@ class Command(BaseCommand):
         Raises:
             CommandError: If the policy file is not found or loading fails.
         """
-        policy_file_path, model_file_path = options["policy_file_path"], options["model_file_path"]
+        policy_file_path, model_file_path = (
+            options["policy_file_path"],
+            options["model_file_path"],
+        )
         if policy_file_path is None:
-            policy_file_path = os.path.join(
-                ROOT_DIRECTORY, "engine", "config", "authz.policy"
-            )
+            policy_file_path = os.path.join(ROOT_DIRECTORY, "engine", "config", "authz.policy")
         if model_file_path is None:
-            model_file_path = os.path.join(
-                ROOT_DIRECTORY, "engine", "config", "model.conf"
-            )
+            model_file_path = os.path.join(ROOT_DIRECTORY, "engine", "config", "model.conf")
 
         target_enforcer = AuthzEnforcer.get_enforcer()
 
         if options.get("clear_existing"):
             target_enforcer.load_policy()
-            if click.confirm(click.style('Do you want to delete existing roles? '
-                                         '(This will also delete the assignments related to those roles)',
-                                         fg='yellow', bold=True), default=False):
+            if click.confirm(
+                click.style(
+                    "Do you want to delete existing roles? "
+                    "(This will also delete the assignments related to those roles)",
+                    fg="yellow",
+                    bold=True,
+                ),
+                default=False,
+            ):
                 self._delete_existing_roles(target_enforcer)
 
-            if click.confirm(click.style('Do you want to delete existing permissions inheritance?',
-                                         fg='yellow', bold=True), default=False):
+            if click.confirm(
+                click.style(
+                    "Do you want to delete existing permissions inheritance?",
+                    fg="yellow",
+                    bold=True,
+                ),
+                default=False,
+            ):
                 self._delete_permissions_inheritance(target_enforcer)
 
         source_enforcer = casbin.Enforcer(model_file_path, policy_file_path)

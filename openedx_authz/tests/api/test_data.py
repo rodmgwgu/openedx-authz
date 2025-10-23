@@ -203,9 +203,7 @@ class TestPolymorphicData(TestCase):
         """
         library = ContentLibraryData(external_key=external_key)
 
-        expected_namespaced_key = (
-            f"{library.NAMESPACE}{library.SEPARATOR}{external_key}"
-        )
+        expected_namespaced_key = f"{library.NAMESPACE}{library.SEPARATOR}{external_key}"
 
         self.assertIsInstance(library, ContentLibraryData)
         self.assertEqual(library.external_key, external_key)
@@ -233,9 +231,7 @@ class TestScopeMetaClass(TestCase):
         ("sc^generic_scope", ScopeData),
     )
     @unpack
-    def test_dynamic_instantiation_via_namespaced_key(
-        self, namespaced_key, expected_class
-    ):
+    def test_dynamic_instantiation_via_namespaced_key(self, namespaced_key, expected_class):
         """Test that ScopeData dynamically instantiates the correct subclass.
 
         Expected Result:
@@ -418,9 +414,7 @@ class TestDataRepresentation(TestCase):
         ("course_staff", "Course Staff", "role^course_staff"),
     )
     @unpack
-    def test_role_data_str_without_permissions(
-        self, external_key, expected_name, expected_repr
-    ):
+    def test_role_data_str_without_permissions(self, external_key, expected_name, expected_repr):
         """Test RoleData __str__ and __repr__ methods without permissions.
 
         Expected Result:
@@ -456,12 +450,15 @@ class TestDataRepresentation(TestCase):
     @data(
         ("read", "allow", "Read - allow", "act^read => allow"),
         ("write", "deny", "Write - deny", "act^write => deny"),
-        ("delete_library", "allow", "Delete Library - allow", "act^delete_library => allow"),
+        (
+            "delete_library",
+            "allow",
+            "Delete Library - allow",
+            "act^delete_library => allow",
+        ),
     )
     @unpack
-    def test_permission_data_str_and_repr(
-        self, action_key, effect, expected_str, expected_repr
-    ):
+    def test_permission_data_str_and_repr(self, action_key, effect, expected_str, expected_repr):
         """Test PermissionData __str__ and __repr__ methods.
 
         Expected Result:
@@ -508,7 +505,5 @@ class TestDataRepresentation(TestCase):
 
         actual_repr = repr(assignment)
 
-        expected_repr = (
-            "user^john_doe => [role^instructor, role^library_admin] @ lib^lib:DemoX:CSPROB"
-        )
+        expected_repr = "user^john_doe => [role^instructor, role^library_admin] @ lib^lib:DemoX:CSPROB"
         self.assertEqual(actual_repr, expected_repr)

@@ -111,10 +111,14 @@ class ListUsersInRoleWithScopeSerializer(ScopeMixin):  # pylint: disable=abstrac
 
     roles = CommaSeparatedListField(required=False, default=[])
     sort_by = serializers.ChoiceField(
-        required=False, choices=[(e.value, e.name) for e in SortField], default=SortField.USERNAME
+        required=False,
+        choices=[(e.value, e.name) for e in SortField],
+        default=SortField.USERNAME,
     )
     order = serializers.ChoiceField(
-        required=False, choices=[(e.value, e.name) for e in SortOrder], default=SortOrder.ASC
+        required=False,
+        choices=[(e.value, e.name) for e in SortOrder],
+        default=SortOrder.ASC,
     )
     search = LowercaseCharField(required=False, default=None)
 
