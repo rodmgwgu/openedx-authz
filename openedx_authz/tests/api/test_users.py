@@ -14,8 +14,9 @@ from openedx_authz.api.users import (
     is_user_allowed,
     unassign_role_from_user,
 )
+from openedx_authz.constants import permissions, roles
+from openedx_authz.constants.roles import LIBRARY_ADMIN_PERMISSIONS, LIBRARY_AUTHOR_PERMISSIONS
 from openedx_authz.tests.api.test_roles import RolesTestSetupMixin
-from openedx_authz.tests.constants import LIST_LIBRARY_ADMIN_PERMISSIONS, LIST_LIBRARY_AUTHOR_PERMISSIONS
 
 
 class UserAssignmentsSetupMixin(RolesTestSetupMixin):
@@ -51,10 +52,10 @@ class TestUserRoleAssignments(UserAssignmentsSetupMixin):
     """Test suite for user-role assignment API functions."""
 
     @data(
-        ("john", "library_admin", "lib:Org1:math_101", False),
-        ("jane", "library_user", "lib:Org1:english_101", False),
-        (["mary", "charlie"], "library_contributor", "lib:Org1:science_301", True),
-        (["david", "sarah"], "library_author", "lib:Org1:history_201", True),
+        ("john", roles.LIBRARY_ADMIN.external_key, "lib:Org1:math_101", False),
+        ("jane", roles.LIBRARY_USER.external_key, "lib:Org1:english_101", False),
+        (["mary", "charlie"], roles.LIBRARY_CONTRIBUTOR.external_key, "lib:Org1:science_301", True),
+        (["david", "sarah"], roles.LIBRARY_AUTHOR.external_key, "lib:Org1:history_201", True),
     )
     @unpack
     def test_assign_role_to_user_in_scope(self, username, role, scope_name, batch):
@@ -80,10 +81,10 @@ class TestUserRoleAssignments(UserAssignmentsSetupMixin):
             self.assertIn(role, role_names)
 
     @data(
-        (["grace"], "library_contributor", "lib:Org1:math_advanced", True),
-        (["liam", "maya"], "library_author", "lib:Org4:art_101", True),
-        ("alice", "library_admin", "lib:Org1:math_101", False),
-        ("bob", "library_author", "lib:Org1:history_201", False),
+        (["grace"], roles.LIBRARY_CONTRIBUTOR.external_key, "lib:Org1:math_advanced", True),
+        (["liam", "maya"], roles.LIBRARY_AUTHOR.external_key, "lib:Org4:art_101", True),
+        ("alice", roles.LIBRARY_ADMIN.external_key, "lib:Org1:math_101", False),
+        ("bob", roles.LIBRARY_AUTHOR.external_key, "lib:Org1:history_201", False),
     )
     @unpack
     def test_unassign_role_from_user(self, username, role, scope_name, batch):
@@ -110,9 +111,9 @@ class TestUserRoleAssignments(UserAssignmentsSetupMixin):
             self.assertNotIn(role, role_names)
 
     @data(
-        ("eve", {"library_admin", "library_author", "library_user"}),
-        ("alice", {"library_admin"}),
-        ("liam", {"library_author"}),
+        ("eve", {roles.LIBRARY_ADMIN.external_key, roles.LIBRARY_AUTHOR.external_key, roles.LIBRARY_USER.external_key}),
+        ("alice", {roles.LIBRARY_ADMIN.external_key}),
+        ("liam", {roles.LIBRARY_AUTHOR.external_key}),
     )
     @unpack
     def test_get_user_role_assignments(self, username, expected_roles):
@@ -128,10 +129,10 @@ class TestUserRoleAssignments(UserAssignmentsSetupMixin):
         self.assertEqual(assigned_role_names, expected_roles)
 
     @data(
-        ("alice", "lib:Org1:math_101", {"library_admin"}),
-        ("bob", "lib:Org1:history_201", {"library_author"}),
-        ("eve", "lib:Org2:physics_401", {"library_admin"}),
-        ("grace", "lib:Org1:math_advanced", {"library_contributor"}),
+        ("alice", "lib:Org1:math_101", {roles.LIBRARY_ADMIN.external_key}),
+        ("bob", "lib:Org1:history_201", {roles.LIBRARY_AUTHOR.external_key}),
+        ("eve", "lib:Org2:physics_401", {roles.LIBRARY_ADMIN.external_key}),
+        ("grace", "lib:Org1:math_advanced", {roles.LIBRARY_CONTRIBUTOR.external_key}),
     )
     @unpack
     def test_get_user_role_assignments_in_scope(self, username, scope_name, expected_roles):
@@ -147,9 +148,9 @@ class TestUserRoleAssignments(UserAssignmentsSetupMixin):
         self.assertEqual(role_names, expected_roles)
 
     @data(
-        ("library_admin", "lib:Org1:math_101", {"alice"}),
-        ("library_author", "lib:Org1:history_201", {"bob"}),
-        ("library_contributor", "lib:Org1:math_advanced", {"grace", "heidi"}),
+        (roles.LIBRARY_ADMIN.external_key, "lib:Org1:math_101", {"alice"}),
+        (roles.LIBRARY_AUTHOR.external_key, "lib:Org1:history_201", {"bob"}),
+        (roles.LIBRARY_CONTRIBUTOR.external_key, "lib:Org1:math_advanced", {"grace", "heidi"}),
     )
     @unpack
     def test_get_user_role_assignments_for_role_in_scope(self, role_name, scope_name, expected_users):
@@ -175,8 +176,8 @@ class TestUserRoleAssignments(UserAssignmentsSetupMixin):
                     subject=UserData(external_key="alice"),
                     roles=[
                         RoleData(
-                            external_key="library_admin",
-                            permissions=LIST_LIBRARY_ADMIN_PERMISSIONS,
+                            external_key=roles.LIBRARY_ADMIN.external_key,
+                            permissions=LIBRARY_ADMIN_PERMISSIONS,
                         )
                     ],
                     scope=ContentLibraryData(external_key="lib:Org1:math_101"),
@@ -190,8 +191,8 @@ class TestUserRoleAssignments(UserAssignmentsSetupMixin):
                     subject=UserData(external_key="bob"),
                     roles=[
                         RoleData(
-                            external_key="library_author",
-                            permissions=LIST_LIBRARY_AUTHOR_PERMISSIONS,
+                            external_key=roles.LIBRARY_AUTHOR.external_key,
+                            permissions=LIBRARY_AUTHOR_PERMISSIONS,
                         )
                     ],
                     scope=ContentLibraryData(external_key="lib:Org1:history_201"),
@@ -205,8 +206,8 @@ class TestUserRoleAssignments(UserAssignmentsSetupMixin):
                     subject=UserData(external_key="eve"),
                     roles=[
                         RoleData(
-                            external_key="library_admin",
-                            permissions=LIST_LIBRARY_ADMIN_PERMISSIONS,
+                            external_key=roles.LIBRARY_ADMIN.external_key,
+                            permissions=LIBRARY_ADMIN_PERMISSIONS,
                         )
                     ],
                     scope=ContentLibraryData(external_key="lib:Org2:physics_401"),
@@ -234,16 +235,16 @@ class TestUserPermissions(UserAssignmentsSetupMixin):
     """Test suite for user permission API functions."""
 
     @data(
-        ("alice", "delete_library", "lib:Org1:math_101", True),
-        ("bob", "publish_library_content", "lib:Org1:history_201", True),
-        ("eve", "manage_library_team", "lib:Org2:physics_401", True),
-        ("grace", "edit_library_content", "lib:Org1:math_advanced", True),
-        ("heidi", "create_library_collection", "lib:Org1:math_advanced", True),
-        ("charlie", "delete_library", "lib:Org1:science_301", False),
-        ("david", "publish_library_content", "lib:Org1:history_201", False),
-        ("mallory", "manage_library_team", "lib:Org1:math_101", False),
-        ("oscar", "edit_library_content", "lib:Org4:art_101", False),
-        ("peggy", "create_library_collection", "lib:Org2:physics_401", False),
+        ("alice", permissions.DELETE_LIBRARY.identifier, "lib:Org1:math_101", True),
+        ("bob", permissions.PUBLISH_LIBRARY_CONTENT.identifier, "lib:Org1:history_201", True),
+        ("eve", permissions.MANAGE_LIBRARY_TEAM.identifier, "lib:Org2:physics_401", True),
+        ("grace", permissions.EDIT_LIBRARY_CONTENT.identifier, "lib:Org1:math_advanced", True),
+        ("heidi", permissions.CREATE_LIBRARY_COLLECTION.identifier, "lib:Org1:math_advanced", True),
+        ("charlie", permissions.DELETE_LIBRARY.identifier, "lib:Org1:science_301", False),
+        ("david", permissions.PUBLISH_LIBRARY_CONTENT.identifier, "lib:Org1:history_201", False),
+        ("mallory", permissions.MANAGE_LIBRARY_TEAM.identifier, "lib:Org1:math_101", False),
+        ("oscar", permissions.EDIT_LIBRARY_CONTENT.identifier, "lib:Org4:art_101", False),
+        ("peggy", permissions.CREATE_LIBRARY_COLLECTION.identifier, "lib:Org2:physics_401", False),
     )
     @unpack
     def test_is_user_allowed(self, username, action, scope_name, expected_result):

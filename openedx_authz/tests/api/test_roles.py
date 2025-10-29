@@ -6,6 +6,7 @@ roles and permissions within specific scopes.
 """
 
 import casbin
+import pkg_resources
 from ddt import data as ddt_data
 from ddt import ddt, unpack
 from django.test import TestCase
@@ -25,14 +26,15 @@ from openedx_authz.api.roles import (
     get_subjects_for_role_in_scope,
     unassign_role_from_subject_in_scope,
 )
+from openedx_authz.constants import roles
+from openedx_authz.constants.roles import (
+    LIBRARY_ADMIN_PERMISSIONS,
+    LIBRARY_AUTHOR_PERMISSIONS,
+    LIBRARY_CONTRIBUTOR_PERMISSIONS,
+    LIBRARY_USER_PERMISSIONS,
+)
 from openedx_authz.engine.enforcer import AuthzEnforcer
 from openedx_authz.engine.utils import migrate_policy_between_enforcers
-from openedx_authz.tests.constants import (
-    LIST_LIBRARY_ADMIN_PERMISSIONS,
-    LIST_LIBRARY_AUTHOR_PERMISSIONS,
-    LIST_LIBRARY_CONTRIBUTOR_PERMISSIONS,
-    LIST_LIBRARY_USER_PERMISSIONS,
-)
 
 
 class BaseRolesTestCase(TestCase):
@@ -52,11 +54,11 @@ class BaseRolesTestCase(TestCase):
         """
         global_enforcer = AuthzEnforcer.get_enforcer()
         global_enforcer.load_policy()
+        model_path = pkg_resources.resource_filename("openedx_authz.engine", "config/model.conf")
+        policy_path = pkg_resources.resource_filename("openedx_authz.engine", "config/authz.policy")
+
         migrate_policy_between_enforcers(
-            source_enforcer=casbin.Enforcer(
-                "openedx_authz/engine/config/model.conf",
-                "openedx_authz/engine/config/authz.policy",
-            ),
+            source_enforcer=casbin.Enforcer(model_path, policy_path),
             target_enforcer=global_enforcer,
         )
         global_enforcer.clear_policy()  # Clear to simulate fresh start for each test
@@ -124,123 +126,123 @@ class RolesTestSetupMixin(BaseRolesTestCase):
             # Basic library roles from authz.policy
             {
                 "subject_name": "alice",
-                "role_name": "library_admin",
+                "role_name": roles.LIBRARY_ADMIN.external_key,
                 "scope_name": "lib:Org1:math_101",
             },
             {
                 "subject_name": "bob",
-                "role_name": "library_author",
+                "role_name": roles.LIBRARY_AUTHOR.external_key,
                 "scope_name": "lib:Org1:history_201",
             },
             {
                 "subject_name": "carol",
-                "role_name": "library_contributor",
+                "role_name": roles.LIBRARY_CONTRIBUTOR.external_key,
                 "scope_name": "lib:Org1:science_301",
             },
             {
                 "subject_name": "dave",
-                "role_name": "library_user",
+                "role_name": roles.LIBRARY_USER.external_key,
                 "scope_name": "lib:Org1:english_101",
             },
             # Multi-role assignments - same subject with different roles in different libraries
             {
                 "subject_name": "eve",
-                "role_name": "library_admin",
+                "role_name": roles.LIBRARY_ADMIN.external_key,
                 "scope_name": "lib:Org2:physics_401",
             },
             {
                 "subject_name": "eve",
-                "role_name": "library_author",
+                "role_name": roles.LIBRARY_AUTHOR.external_key,
                 "scope_name": "lib:Org2:chemistry_501",
             },
             {
                 "subject_name": "eve",
-                "role_name": "library_user",
+                "role_name": roles.LIBRARY_USER.external_key,
                 "scope_name": "lib:Org2:biology_601",
             },
             # Multiple subjects with same role in same scope
             {
                 "subject_name": "grace",
-                "role_name": "library_contributor",
+                "role_name": roles.LIBRARY_CONTRIBUTOR.external_key,
                 "scope_name": "lib:Org1:math_advanced",
             },
             {
                 "subject_name": "heidi",
-                "role_name": "library_contributor",
+                "role_name": roles.LIBRARY_CONTRIBUTOR.external_key,
                 "scope_name": "lib:Org1:math_advanced",
             },
             # Hierarchical scope assignments - different specificity levels
             {
                 "subject_name": "ivy",
-                "role_name": "library_admin",
+                "role_name": roles.LIBRARY_ADMIN.external_key,
                 "scope_name": "lib:Org3:cs_101",
             },
             {
                 "subject_name": "jack",
-                "role_name": "library_author",
+                "role_name": roles.LIBRARY_AUTHOR.external_key,
                 "scope_name": "lib:Org3:cs_101",
             },
             {
                 "subject_name": "kate",
-                "role_name": "library_user",
+                "role_name": roles.LIBRARY_USER.external_key,
                 "scope_name": "lib:Org3:cs_101",
             },
             # Edge case: same user, same role, different scopes
             {
                 "subject_name": "liam",
-                "role_name": "library_author",
+                "role_name": roles.LIBRARY_AUTHOR.external_key,
                 "scope_name": "lib:Org4:art_101",
             },
             {
                 "subject_name": "liam",
-                "role_name": "library_author",
+                "role_name": roles.LIBRARY_AUTHOR.external_key,
                 "scope_name": "lib:Org4:art_201",
             },
             {
                 "subject_name": "liam",
-                "role_name": "library_author",
+                "role_name": roles.LIBRARY_AUTHOR.external_key,
                 "scope_name": "lib:Org4:art_301",
             },
             # Mixed permission levels across libraries for comprehensive testing
             {
                 "subject_name": "maya",
-                "role_name": "library_admin",
+                "role_name": roles.LIBRARY_ADMIN.external_key,
                 "scope_name": "lib:Org5:economics_101",
             },
             {
                 "subject_name": "noah",
-                "role_name": "library_contributor",
+                "role_name": roles.LIBRARY_CONTRIBUTOR.external_key,
                 "scope_name": "lib:Org5:economics_101",
             },
             {
                 "subject_name": "olivia",
-                "role_name": "library_user",
+                "role_name": roles.LIBRARY_USER.external_key,
                 "scope_name": "lib:Org5:economics_101",
             },
             # Complex multi-library, multi-role scenario
             {
                 "subject_name": "peter",
-                "role_name": "library_admin",
+                "role_name": roles.LIBRARY_ADMIN.external_key,
                 "scope_name": "lib:Org6:project_alpha",
             },
             {
                 "subject_name": "peter",
-                "role_name": "library_author",
+                "role_name": roles.LIBRARY_AUTHOR.external_key,
                 "scope_name": "lib:Org6:project_beta",
             },
             {
                 "subject_name": "peter",
-                "role_name": "library_contributor",
+                "role_name": roles.LIBRARY_CONTRIBUTOR.external_key,
                 "scope_name": "lib:Org6:project_gamma",
             },
             {
                 "subject_name": "peter",
-                "role_name": "library_user",
+                "role_name": roles.LIBRARY_USER.external_key,
                 "scope_name": "lib:Org6:project_delta",
             },
             {
                 "subject_name": "frank",
-                "role_name": "library_user",
+                "role_name": roles.LIBRARY_USER.external_key,
                 "scope_name": "lib:Org6:project_epsilon",
             },
         ]
@@ -270,23 +272,23 @@ class TestRolesAPI(RolesTestSetupMixin):
     @ddt_data(
         # Library Admin role with actual permissions from authz.policy
         (
-            "library_admin",
-            LIST_LIBRARY_ADMIN_PERMISSIONS,
+            roles.LIBRARY_ADMIN.external_key,
+            LIBRARY_ADMIN_PERMISSIONS,
         ),
         # Library Author role with actual permissions from authz.policy
         (
-            "library_author",
-            LIST_LIBRARY_AUTHOR_PERMISSIONS,
+            roles.LIBRARY_AUTHOR.external_key,
+            LIBRARY_AUTHOR_PERMISSIONS,
         ),
         # Library Contributor role with actual permissions from authz.policy
         (
-            "library_contributor",
-            LIST_LIBRARY_CONTRIBUTOR_PERMISSIONS,
+            roles.LIBRARY_CONTRIBUTOR.external_key,
+            LIBRARY_CONTRIBUTOR_PERMISSIONS,
         ),
         # Library User role with minimal permissions
         (
-            "library_user",
-            LIST_LIBRARY_USER_PERMISSIONS,
+            roles.LIBRARY_USER.external_key,
+            LIBRARY_USER_PERMISSIONS,
         ),
         # Non existent role
         (
@@ -309,21 +311,21 @@ class TestRolesAPI(RolesTestSetupMixin):
     @ddt_data(
         # Role assigned to multiple users in different scopes
         (
-            "library_user",
+            roles.LIBRARY_USER.external_key,
             "lib:Org1:english_101",
-            LIST_LIBRARY_USER_PERMISSIONS,
+            LIBRARY_USER_PERMISSIONS,
         ),
         # Role assigned to single user in single scope
         (
-            "library_author",
+            roles.LIBRARY_AUTHOR.external_key,
             "lib:Org1:history_201",
-            LIST_LIBRARY_AUTHOR_PERMISSIONS,
+            LIBRARY_AUTHOR_PERMISSIONS,
         ),
         # Role assigned to single user in multiple scopes
         (
-            "library_admin",
+            roles.LIBRARY_ADMIN.external_key,
             "lib:Org1:math_101",
-            LIST_LIBRARY_ADMIN_PERMISSIONS,
+            LIBRARY_ADMIN_PERMISSIONS,
         ),
     )
     @unpack
@@ -348,10 +350,10 @@ class TestRolesAPI(RolesTestSetupMixin):
         (
             "*",
             {
-                "library_admin",
-                "library_author",
-                "library_contributor",
-                "library_user",
+                roles.LIBRARY_ADMIN.external_key,
+                roles.LIBRARY_AUTHOR.external_key,
+                roles.LIBRARY_CONTRIBUTOR.external_key,
+                roles.LIBRARY_USER.external_key,
             },
         ),
     )
@@ -375,27 +377,27 @@ class TestRolesAPI(RolesTestSetupMixin):
         self.assertEqual(role_names, expected_roles)
 
     @ddt_data(
-        ("alice", "lib:Org1:math_101", {"library_admin"}),
-        ("bob", "lib:Org1:history_201", {"library_author"}),
-        ("carol", "lib:Org1:science_301", {"library_contributor"}),
-        ("dave", "lib:Org1:english_101", {"library_user"}),
-        ("eve", "lib:Org2:physics_401", {"library_admin"}),
-        ("eve", "lib:Org2:chemistry_501", {"library_author"}),
-        ("eve", "lib:Org2:biology_601", {"library_user"}),
-        ("grace", "lib:Org1:math_advanced", {"library_contributor"}),
-        ("ivy", "lib:Org3:cs_101", {"library_admin"}),
-        ("jack", "lib:Org3:cs_101", {"library_author"}),
-        ("kate", "lib:Org3:cs_101", {"library_user"}),
-        ("liam", "lib:Org4:art_101", {"library_author"}),
-        ("liam", "lib:Org4:art_201", {"library_author"}),
-        ("liam", "lib:Org4:art_301", {"library_author"}),
-        ("maya", "lib:Org5:economics_101", {"library_admin"}),
-        ("noah", "lib:Org5:economics_101", {"library_contributor"}),
-        ("olivia", "lib:Org5:economics_101", {"library_user"}),
-        ("peter", "lib:Org6:project_alpha", {"library_admin"}),
-        ("peter", "lib:Org6:project_beta", {"library_author"}),
-        ("peter", "lib:Org6:project_gamma", {"library_contributor"}),
-        ("peter", "lib:Org6:project_delta", {"library_user"}),
+        ("alice", "lib:Org1:math_101", {roles.LIBRARY_ADMIN.external_key}),
+        ("bob", "lib:Org1:history_201", {roles.LIBRARY_AUTHOR.external_key}),
+        ("carol", "lib:Org1:science_301", {roles.LIBRARY_CONTRIBUTOR.external_key}),
+        ("dave", "lib:Org1:english_101", {roles.LIBRARY_USER.external_key}),
+        ("eve", "lib:Org2:physics_401", {roles.LIBRARY_ADMIN.external_key}),
+        ("eve", "lib:Org2:chemistry_501", {roles.LIBRARY_AUTHOR.external_key}),
+        ("eve", "lib:Org2:biology_601", {roles.LIBRARY_USER.external_key}),
+        ("grace", "lib:Org1:math_advanced", {roles.LIBRARY_CONTRIBUTOR.external_key}),
+        ("ivy", "lib:Org3:cs_101", {roles.LIBRARY_ADMIN.external_key}),
+        ("jack", "lib:Org3:cs_101", {roles.LIBRARY_AUTHOR.external_key}),
+        ("kate", "lib:Org3:cs_101", {roles.LIBRARY_USER.external_key}),
+        ("liam", "lib:Org4:art_101", {roles.LIBRARY_AUTHOR.external_key}),
+        ("liam", "lib:Org4:art_201", {roles.LIBRARY_AUTHOR.external_key}),
+        ("liam", "lib:Org4:art_301", {roles.LIBRARY_AUTHOR.external_key}),
+        ("maya", "lib:Org5:economics_101", {roles.LIBRARY_ADMIN.external_key}),
+        ("noah", "lib:Org5:economics_101", {roles.LIBRARY_CONTRIBUTOR.external_key}),
+        ("olivia", "lib:Org5:economics_101", {roles.LIBRARY_USER.external_key}),
+        ("peter", "lib:Org6:project_alpha", {roles.LIBRARY_ADMIN.external_key}),
+        ("peter", "lib:Org6:project_beta", {roles.LIBRARY_AUTHOR.external_key}),
+        ("peter", "lib:Org6:project_gamma", {roles.LIBRARY_CONTRIBUTOR.external_key}),
+        ("peter", "lib:Org6:project_delta", {roles.LIBRARY_USER.external_key}),
         ("non_existent_user", "lib:Org1:math_101", set()),
         ("alice", "lib:Org999:non_existent_scope", set()),
         ("non_existent_user", "lib:Org999:non_existent_scope", set()),
@@ -419,8 +421,8 @@ class TestRolesAPI(RolesTestSetupMixin):
             "alice",
             [
                 RoleData(
-                    external_key="library_admin",
-                    permissions=LIST_LIBRARY_ADMIN_PERMISSIONS,
+                    external_key=roles.LIBRARY_ADMIN.external_key,
+                    permissions=LIBRARY_ADMIN_PERMISSIONS,
                 ),
             ],
         ),
@@ -428,16 +430,16 @@ class TestRolesAPI(RolesTestSetupMixin):
             "eve",
             [
                 RoleData(
-                    external_key="library_admin",
-                    permissions=LIST_LIBRARY_ADMIN_PERMISSIONS,
+                    external_key=roles.LIBRARY_ADMIN.external_key,
+                    permissions=LIBRARY_ADMIN_PERMISSIONS,
                 ),
                 RoleData(
-                    external_key="library_author",
-                    permissions=LIST_LIBRARY_AUTHOR_PERMISSIONS,
+                    external_key=roles.LIBRARY_AUTHOR.external_key,
+                    permissions=LIBRARY_AUTHOR_PERMISSIONS,
                 ),
                 RoleData(
-                    external_key="library_user",
-                    permissions=LIST_LIBRARY_USER_PERMISSIONS,
+                    external_key=roles.LIBRARY_USER.external_key,
+                    permissions=LIBRARY_USER_PERMISSIONS,
                 ),
             ],
         ),
@@ -445,8 +447,8 @@ class TestRolesAPI(RolesTestSetupMixin):
             "frank",
             [
                 RoleData(
-                    external_key="library_user",
-                    permissions=LIST_LIBRARY_USER_PERMISSIONS,
+                    external_key=roles.LIBRARY_USER.external_key,
+                    permissions=LIBRARY_USER_PERMISSIONS,
                 ),
             ],
         ),
@@ -469,29 +471,29 @@ class TestRolesAPI(RolesTestSetupMixin):
             self.assertTrue(found, f"Expected role {expected_role} not found in assignments")
 
     @ddt_data(
-        ("library_admin", "lib:Org1:math_101", 1),
-        ("library_author", "lib:Org1:history_201", 1),
-        ("library_contributor", "lib:Org1:science_301", 1),
-        ("library_user", "lib:Org1:english_101", 1),
-        ("library_admin", "lib:Org2:physics_401", 1),
-        ("library_author", "lib:Org2:chemistry_501", 1),
-        ("library_user", "lib:Org2:biology_601", 1),
-        ("library_contributor", "lib:Org1:math_advanced", 2),
-        ("library_admin", "lib:Org3:cs_101", 1),
-        ("library_author", "lib:Org3:cs_101", 1),
-        ("library_user", "lib:Org3:cs_101", 1),
-        ("library_author", "lib:Org4:art_101", 1),
-        ("library_author", "lib:Org4:art_201", 1),
-        ("library_author", "lib:Org4:art_301", 1),
-        ("library_admin", "lib:Org5:economics_101", 1),
-        ("library_contributor", "lib:Org5:economics_101", 1),
-        ("library_user", "lib:Org5:economics_101", 1),
-        ("library_admin", "lib:Org6:project_alpha", 1),
-        ("library_author", "lib:Org6:project_beta", 1),
-        ("library_contributor", "lib:Org6:project_gamma", 1),
-        ("library_user", "lib:Org6:project_delta", 1),
+        (roles.LIBRARY_ADMIN.external_key, "lib:Org1:math_101", 1),
+        (roles.LIBRARY_AUTHOR.external_key, "lib:Org1:history_201", 1),
+        (roles.LIBRARY_CONTRIBUTOR.external_key, "lib:Org1:science_301", 1),
+        (roles.LIBRARY_USER.external_key, "lib:Org1:english_101", 1),
+        (roles.LIBRARY_ADMIN.external_key, "lib:Org2:physics_401", 1),
+        (roles.LIBRARY_AUTHOR.external_key, "lib:Org2:chemistry_501", 1),
+        (roles.LIBRARY_USER.external_key, "lib:Org2:biology_601", 1),
+        (roles.LIBRARY_CONTRIBUTOR.external_key, "lib:Org1:math_advanced", 2),
+        (roles.LIBRARY_ADMIN.external_key, "lib:Org3:cs_101", 1),
+        (roles.LIBRARY_AUTHOR.external_key, "lib:Org3:cs_101", 1),
+        (roles.LIBRARY_USER.external_key, "lib:Org3:cs_101", 1),
+        (roles.LIBRARY_AUTHOR.external_key, "lib:Org4:art_101", 1),
+        (roles.LIBRARY_AUTHOR.external_key, "lib:Org4:art_201", 1),
+        (roles.LIBRARY_AUTHOR.external_key, "lib:Org4:art_301", 1),
+        (roles.LIBRARY_ADMIN.external_key, "lib:Org5:economics_101", 1),
+        (roles.LIBRARY_CONTRIBUTOR.external_key, "lib:Org5:economics_101", 1),
+        (roles.LIBRARY_USER.external_key, "lib:Org5:economics_101", 1),
+        (roles.LIBRARY_ADMIN.external_key, "lib:Org6:project_alpha", 1),
+        (roles.LIBRARY_AUTHOR.external_key, "lib:Org6:project_beta", 1),
+        (roles.LIBRARY_CONTRIBUTOR.external_key, "lib:Org6:project_gamma", 1),
+        (roles.LIBRARY_USER.external_key, "lib:Org6:project_delta", 1),
         ("non_existent_role", "sc:any_library", 0),
-        ("library_admin", "sc:non_existent_scope", 0),
+        (roles.LIBRARY_ADMIN.external_key, "sc:non_existent_scope", 0),
         ("non_existent_role", "sc:non_existent_scope", 0),
     )
     @unpack
@@ -513,7 +515,7 @@ class TestRolesAPI(RolesTestSetupMixin):
         Expected result:
             - The scopes associated with the specified role and subject are correctly retrieved.
         """
-        role_name = "library_author"
+        role_name = roles.LIBRARY_AUTHOR.external_key
         subject_name = "liam"
         expected_scopes = {"lib:Org4:art_101", "lib:Org4:art_201", "lib:Org4:art_301"}
 
@@ -526,11 +528,11 @@ class TestRolesAPI(RolesTestSetupMixin):
         self.assertEqual(scope_names, expected_scopes)
 
     @ddt_data(
-        ("library_author", "lib:Org4:art_101", {"liam"}),
-        ("library_author", "lib:Org4:art_201", {"liam"}),
-        ("library_author", "lib:Org4:art_301", {"liam"}),
+        (roles.LIBRARY_AUTHOR.external_key, "lib:Org4:art_101", {"liam"}),
+        (roles.LIBRARY_AUTHOR.external_key, "lib:Org4:art_201", {"liam"}),
+        (roles.LIBRARY_AUTHOR.external_key, "lib:Org4:art_301", {"liam"}),
         ("non_existent_role", "lib:Org4:art_101", set()),
-        ("library_author", "sc:non_existent_scope", set()),
+        (roles.LIBRARY_AUTHOR.external_key, "sc:non_existent_scope", set()),
         ("non_existent_role", "sc:non_existent_scope", set()),
     )
     @unpack
@@ -559,24 +561,24 @@ class TestRoleAssignmentAPI(RolesTestSetupMixin):
     """
 
     @ddt_data(
-        (["mary", "john"], "library_user", "sc:batch_test", True),
+        (["mary", "john"], roles.LIBRARY_USER.external_key, "sc:batch_test", True),
         (
             ["paul", "diana", "lila"],
-            "library_contributor",
+            roles.LIBRARY_CONTRIBUTOR.external_key,
             "lib:Org1:math_advanced",
             True,
         ),
-        (["sarina", "ty"], "library_author", "lib:Org4:art_101", True),
-        (["fran", "bob"], "library_admin", "lib:Org3:cs_101", True),
+        (["sarina", "ty"], roles.LIBRARY_AUTHOR.external_key, "lib:Org4:art_101", True),
+        (["fran", "bob"], roles.LIBRARY_ADMIN.external_key, "lib:Org3:cs_101", True),
         (
             ["anna", "tom", "jerry"],
-            "library_user",
+            roles.LIBRARY_USER.external_key,
             "lib:Org1:history_201",
             True,
         ),
-        ("joe", "library_contributor", "lib:Org1:science_301", False),
-        ("nina", "library_author", "lib:Org1:english_101", False),
-        ("oliver", "library_admin", "lib:Org1:math_101", False),
+        ("joe", roles.LIBRARY_CONTRIBUTOR.external_key, "lib:Org1:science_301", False),
+        ("nina", roles.LIBRARY_AUTHOR.external_key, "lib:Org1:english_101", False),
+        ("oliver", roles.LIBRARY_ADMIN.external_key, "lib:Org1:math_101", False),
     )
     @unpack
     def test_batch_assign_role_to_subjects_in_scope(self, subject_names, role, scope_name, batch):
@@ -617,24 +619,24 @@ class TestRoleAssignmentAPI(RolesTestSetupMixin):
             self.assertIn(role, role_names)
 
     @ddt_data(
-        (["mary", "john"], "library_user", "sc:batch_test", True),
+        (["mary", "john"], roles.LIBRARY_USER.external_key, "sc:batch_test", True),
         (
             ["paul", "diana", "lila"],
-            "library_contributor",
+            roles.LIBRARY_CONTRIBUTOR.external_key,
             "lib:Org1:math_advanced",
             True,
         ),
-        (["sarina", "ty"], "library_author", "lib:Org4:art_101", True),
-        (["fran", "bob"], "library_admin", "lib:Org3:cs_101", True),
+        (["sarina", "ty"], roles.LIBRARY_AUTHOR.external_key, "lib:Org4:art_101", True),
+        (["fran", "bob"], roles.LIBRARY_ADMIN.external_key, "lib:Org3:cs_101", True),
         (
             ["anna", "tom", "jerry"],
-            "library_user",
+            roles.LIBRARY_USER.external_key,
             "lib:Org1:history_201",
             True,
         ),
-        ("joe", "library_contributor", "lib:Org1:science_301", False),
-        ("nina", "library_author", "lib:Org1:english_101", False),
-        ("oliver", "library_admin", "lib:Org1:math_101", False),
+        ("joe", roles.LIBRARY_CONTRIBUTOR.external_key, "lib:Org1:science_301", False),
+        ("nina", roles.LIBRARY_AUTHOR.external_key, "lib:Org1:english_101", False),
+        ("oliver", roles.LIBRARY_ADMIN.external_key, "lib:Org1:math_101", False),
     )
     @unpack
     def test_unassign_role_from_subject_in_scope(self, subject_names, role, scope_name, batch):
@@ -679,8 +681,8 @@ class TestRoleAssignmentAPI(RolesTestSetupMixin):
                     subject=SubjectData(external_key="alice"),
                     roles=[
                         RoleData(
-                            external_key="library_admin",
-                            permissions=LIST_LIBRARY_ADMIN_PERMISSIONS,
+                            external_key=roles.LIBRARY_ADMIN.external_key,
+                            permissions=LIBRARY_ADMIN_PERMISSIONS,
                         )
                     ],
                     scope=ScopeData(external_key="lib:Org1:math_101"),
@@ -694,8 +696,8 @@ class TestRoleAssignmentAPI(RolesTestSetupMixin):
                     subject=SubjectData(external_key="bob"),
                     roles=[
                         RoleData(
-                            external_key="library_author",
-                            permissions=LIST_LIBRARY_AUTHOR_PERMISSIONS,
+                            external_key=roles.LIBRARY_AUTHOR.external_key,
+                            permissions=LIBRARY_AUTHOR_PERMISSIONS,
                         )
                     ],
                     scope=ScopeData(external_key="lib:Org1:history_201"),
@@ -709,8 +711,8 @@ class TestRoleAssignmentAPI(RolesTestSetupMixin):
                     subject=SubjectData(external_key="carol"),
                     roles=[
                         RoleData(
-                            external_key="library_contributor",
-                            permissions=LIST_LIBRARY_CONTRIBUTOR_PERMISSIONS,
+                            external_key=roles.LIBRARY_CONTRIBUTOR.external_key,
+                            permissions=LIBRARY_CONTRIBUTOR_PERMISSIONS,
                         )
                     ],
                     scope=ScopeData(external_key="lib:Org1:science_301"),
@@ -724,8 +726,8 @@ class TestRoleAssignmentAPI(RolesTestSetupMixin):
                     subject=SubjectData(external_key="dave"),
                     roles=[
                         RoleData(
-                            external_key="library_user",
-                            permissions=LIST_LIBRARY_USER_PERMISSIONS,
+                            external_key=roles.LIBRARY_USER.external_key,
+                            permissions=LIBRARY_USER_PERMISSIONS,
                         )
                     ],
                     scope=ScopeData(external_key="lib:Org1:english_101"),

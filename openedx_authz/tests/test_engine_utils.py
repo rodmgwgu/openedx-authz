@@ -15,6 +15,7 @@ from django.db.models import Count
 from django.test import TestCase
 
 from openedx_authz import ROOT_DIRECTORY
+from openedx_authz.constants import permissions, roles
 from openedx_authz.engine.enforcer import AuthzEnforcer
 from openedx_authz.engine.utils import migrate_policy_between_enforcers
 from openedx_authz.tests.test_utils import make_action_key, make_role_key, make_scope_key, make_user_key
@@ -92,8 +93,8 @@ class TestMigratePolicyBetweenEnforcers(TestCase):
 
         self.assertIn(
             [
-                make_role_key("library_admin"),
-                make_action_key("delete_library"),
+                make_role_key(roles.LIBRARY_ADMIN.external_key),
+                make_action_key(permissions.DELETE_LIBRARY.identifier),
                 make_scope_key("lib", "*"),
                 "allow",
             ],
@@ -101,8 +102,8 @@ class TestMigratePolicyBetweenEnforcers(TestCase):
         )
         self.assertIn(
             [
-                make_role_key("library_user"),
-                make_action_key("view_library"),
+                make_role_key(roles.LIBRARY_USER.external_key),
+                make_action_key(permissions.VIEW_LIBRARY.identifier),
                 make_scope_key("lib", "*"),
                 "allow",
             ],
@@ -151,15 +152,15 @@ class TestMigratePolicyBetweenEnforcers(TestCase):
         # Verify a sample of expected g2 rules from the file
         self.assertIn(
             [
-                make_action_key("delete_library"),
-                make_action_key("edit_library_content"),
+                make_action_key(permissions.DELETE_LIBRARY.identifier),
+                make_action_key(permissions.EDIT_LIBRARY_CONTENT.identifier),
             ],
             target_g2,
         )
         self.assertIn(
             [
-                make_action_key("manage_library_team"),
-                make_action_key("view_library_team"),
+                make_action_key(permissions.MANAGE_LIBRARY_TEAM.identifier),
+                make_action_key(permissions.VIEW_LIBRARY_TEAM.identifier),
             ],
             target_g2,
         )
@@ -238,8 +239,8 @@ class TestMigratePolicyBetweenEnforcers(TestCase):
             - Mixed state is handled correctly
         """
         self.target_enforcer.add_policy(
-            make_role_key("library_admin"),
-            make_action_key("delete_library"),
+            make_role_key(roles.LIBRARY_ADMIN.external_key),
+            make_action_key(permissions.DELETE_LIBRARY.identifier),
             make_scope_key("lib", "*"),
             "allow",
         )
@@ -263,18 +264,18 @@ class TestMigratePolicyBetweenEnforcers(TestCase):
 
     @data(
         (
-            make_role_key("library_admin"),
-            make_action_key("delete_library"),
+            make_role_key(roles.LIBRARY_ADMIN.external_key),
+            make_action_key(permissions.DELETE_LIBRARY.identifier),
             make_scope_key("lib", "*"),
         ),
         (
-            make_role_key("library_user"),
-            make_action_key("view_library"),
+            make_role_key(roles.LIBRARY_USER.external_key),
+            make_action_key(permissions.VIEW_LIBRARY.identifier),
             make_scope_key("lib", "*"),
         ),
         (
-            make_role_key("library_author"),
-            make_action_key("edit_library_content"),
+            make_role_key(roles.LIBRARY_AUTHOR.external_key),
+            make_action_key(permissions.EDIT_LIBRARY_CONTENT.identifier),
             make_scope_key("lib", "*"),
         ),
     )
@@ -296,9 +297,18 @@ class TestMigratePolicyBetweenEnforcers(TestCase):
         )
 
     @data(
-        (make_action_key("delete_library"), make_action_key("edit_library_content")),
-        (make_action_key("edit_library_content"), make_action_key("view_library")),
-        (make_action_key("manage_library_team"), make_action_key("view_library_team")),
+        (
+            make_action_key(permissions.DELETE_LIBRARY.identifier),
+            make_action_key(permissions.EDIT_LIBRARY_CONTENT.identifier),
+        ),
+        (
+            make_action_key(permissions.EDIT_LIBRARY_CONTENT.identifier),
+            make_action_key(permissions.VIEW_LIBRARY.identifier),
+        ),
+        (
+            make_action_key(permissions.MANAGE_LIBRARY_TEAM.identifier),
+            make_action_key(permissions.VIEW_LIBRARY_TEAM.identifier),
+        ),
     )
     @unpack
     def test_migrate_specific_action_inheritance(self, parent_action, child_action):
@@ -349,12 +359,12 @@ class TestMigratePolicyBetweenEnforcers(TestCase):
         """
         self.target_enforcer.add_grouping_policy(
             make_user_key("user-1"),
-            make_role_key("library_admin"),
+            make_role_key(roles.LIBRARY_ADMIN.external_key),
             make_scope_key("lib", "demo"),
         )
         self.target_enforcer.add_grouping_policy(
             make_user_key("user-2"),
-            make_role_key("library_user"),
+            make_role_key(roles.LIBRARY_USER.external_key),
             make_scope_key("lib", "*"),
         )
 
@@ -365,7 +375,7 @@ class TestMigratePolicyBetweenEnforcers(TestCase):
         self.assertIn(
             [
                 make_user_key("user-1"),
-                make_role_key("library_admin"),
+                make_role_key(roles.LIBRARY_ADMIN.external_key),
                 make_scope_key("lib", "demo"),
             ],
             target_grouping,
