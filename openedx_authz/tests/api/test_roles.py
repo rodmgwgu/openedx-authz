@@ -5,6 +5,8 @@ including role creation, assignment, permission management, and querying
 roles and permissions within specific scopes.
 """
 
+from unittest.mock import patch
+
 import casbin
 import pkg_resources
 from ddt import data as ddt_data
@@ -43,6 +45,32 @@ from openedx_authz.constants.roles import (
 )
 from openedx_authz.engine.enforcer import AuthzEnforcer
 from openedx_authz.engine.utils import migrate_policy_between_enforcers
+from openedx_authz.models import ExtendedCasbinRule, Scope, Subject
+
+
+def _mock_get_or_create_scope(scope_data):
+    """Mock implementation that creates actual Scope instances."""
+    scope, _ = Scope.objects.get_or_create(id=hash(scope_data.external_key) % 10000)
+    return scope
+
+
+def _mock_get_or_create_subject(subject_data):
+    """Mock implementation that creates actual Subject instances."""
+    subject, _ = Subject.objects.get_or_create(id=hash(subject_data.external_key) % 10000)
+    return subject
+
+
+# Apply patches at module level using the new manager method
+_scope_patcher = patch(
+    "openedx_authz.models.ScopeManager.get_or_create_for_external_key",
+    side_effect=_mock_get_or_create_scope,
+)
+_subject_patcher = patch(
+    "openedx_authz.models.SubjectManager.get_or_create_for_external_key",
+    side_effect=_mock_get_or_create_subject,
+)
+_scope_patcher.start()
+_subject_patcher.start()
 
 
 class BaseRolesTestCase(TestCase):
@@ -276,6 +304,50 @@ class TestRolesAPI(RolesTestSetupMixin):
     - The global enforcer instance is used to ensure consistency with production
     environments.
     """
+
+    def test_assign_role_creates_extended_rule(self):
+        """Assign a role to a subject and verify an ExtendedCasbinRule is created.
+
+        Expected result:
+            - The assignment function returns True
+            - An ExtendedCasbinRule record exists linking the subject and scope
+        """
+
+        subject = SubjectData(external_key="unit_test_user_assign_1")
+        role = RoleData(external_key="library_user")
+        scope = ScopeData(external_key="lib:UnitTest:assign_lib_1")
+
+        subj_before = Subject.objects.get_or_create_for_external_key(subject)
+        scope_before = Scope.objects.get_or_create_for_external_key(scope)
+        self.assertFalse(ExtendedCasbinRule.objects.filter(subject=subj_before, scope=scope_before).exists())
+
+        result = assign_role_to_subject_in_scope(subject, role, scope)
+        self.assertTrue(result)
+
+        subj_obj = Subject.objects.get_or_create_for_external_key(subject)
+        scope_obj = Scope.objects.get_or_create_for_external_key(scope)
+        self.assertTrue(ExtendedCasbinRule.objects.filter(subject=subj_obj, scope=scope_obj).exists())
+
+    def test_assign_role_fails_when_extended_rule_not_created(self):
+        """Test that assign_role raises exception when ExtendedCasbinRule creation fails.
+
+        Expected result:
+            - Exception is raised when ExtendedCasbinRule.create_based_on_policy returns None
+            - Transaction is rolled back and no role assignment persists
+        """
+        subject = SubjectData(external_key="unit_test_user_assign_fail")
+        role = RoleData(external_key="library_user")
+        scope = ScopeData(external_key="lib:UnitTest:assign_fail_lib")
+
+        with patch("openedx_authz.models.ExtendedCasbinRule.create_based_on_policy", return_value=None):
+            with self.assertRaises(Exception) as context:
+                assign_role_to_subject_in_scope(subject, role, scope)
+
+            self.assertEqual(str(context.exception), "Failed to create ExtendedCasbinRule for the assignment")
+
+            subj_obj = Subject.objects.get_or_create_for_external_key(subject)
+            scope_obj = Scope.objects.get_or_create_for_external_key(scope)
+            self.assertFalse(ExtendedCasbinRule.objects.filter(subject=subj_obj, scope=scope_obj).exists())
 
     @ddt_data(
         # Library Admin role with actual permissions from authz.policy
@@ -877,3 +949,30 @@ class TestRoleAssignmentAPI(RolesTestSetupMixin):
         self.assertEqual(len(role_assignments), len(expected_assignments))
         for assignment in role_assignments:
             self.assertIn(assignment, expected_assignments)
+
+    def test_assign_role_creates_extended_casbin_rule(self):
+        """Test that assigning a role creates an ExtendedCasbinRule record.
+
+        Expected result:
+            - After assigning a role, an ExtendedCasbinRule is created
+            - The ExtendedCasbinRule has the correct subject and scope references
+            - The ExtendedCasbinRule is linked to a CasbinRule
+        """
+        initial_count = ExtendedCasbinRule.objects.count()
+        subject_data = SubjectData(external_key="test_user_extended")
+        role_data = RoleData(external_key=roles.LIBRARY_USER.external_key)
+        scope_data = ScopeData(external_key="lib:TestOrg:TestLib")
+
+        assign_role_to_subject_in_scope(subject_data, role_data, scope_data)
+
+        new_count = ExtendedCasbinRule.objects.count()
+        self.assertEqual(new_count, initial_count + 1)
+
+        extended_rule = ExtendedCasbinRule.objects.order_by('-id').first()
+        self.assertIsNotNone(extended_rule)
+        self.assertIsNotNone(extended_rule.casbin_rule)
+        self.assertIsNotNone(extended_rule.subject)
+        self.assertIsNotNone(extended_rule.scope)
+        self.assertIn(role_data.namespaced_key, extended_rule.casbin_rule_key)
+        self.assertIn(subject_data.namespaced_key, extended_rule.casbin_rule_key)
+        self.assertIn(scope_data.namespaced_key, extended_rule.casbin_rule_key)
