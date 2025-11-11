@@ -22,6 +22,7 @@ from casbin_adapter.enforcer import initialize_enforcer
 from django.conf import settings
 
 from openedx_authz.engine.adapter import ExtendedAdapter
+from openedx_authz.engine.matcher import is_admin_or_superuser_check
 
 
 def libraries_v2_enabled() -> bool:
@@ -195,5 +196,6 @@ class AuthzEnforcer:
 
         adapter = ExtendedAdapter()
         enforcer = SyncedEnforcer(settings.CASBIN_MODEL, adapter)
+        enforcer.add_function("is_staff_or_superuser", is_admin_or_superuser_check)
 
         return enforcer
