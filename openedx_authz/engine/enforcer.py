@@ -21,6 +21,7 @@ from uuid import uuid4
 
 from casbin import SyncedEnforcer
 from casbin.util.log import DEFAULT_LOGGING, configure_logging
+from casbin.util import key_match_func
 from casbin_adapter.enforcer import initialize_enforcer
 from django.conf import settings
 
@@ -163,7 +164,7 @@ class AuthzEnforcer:
         This controls the verbosity of Casbin's policy evaluation and role management
         logging. The log level defaults to WARNING if CASBIN_LOG_LEVEL is not set.
         """
-        log_level = getattr(settings, "CASBIN_LOG_LEVEL", "WARNING")
+        log_level = "DEBUG" #getattr(settings, "CASBIN_LOG_LEVEL", "DEBUG")
         casbin_logging = deepcopy(DEFAULT_LOGGING)
         for logger_name in casbin_logging["loggers"]:
             casbin_logging["loggers"][logger_name]["level"] = log_level
@@ -279,5 +280,6 @@ class AuthzEnforcer:
         adapter = ExtendedAdapter()
         enforcer = SyncedEnforcer(settings.CASBIN_MODEL, adapter)
         enforcer.add_function("is_staff_or_superuser", is_admin_or_superuser_check)
+        enforcer.add_named_domain_matching_func("g", key_match_func)
 
         return enforcer
